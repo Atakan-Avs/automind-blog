@@ -1,0 +1,22 @@
+# --- Build Stage ---
+FROM node:18 as builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build || echo "No build script"
+
+# --- Production Stage ---
+FROM node:18
+
+WORKDIR /app
+
+COPY --from=builder /app ./
+
+ENV NODE_ENV=production
+EXPOSE 4000
+
+CMD ["node", "src/index.js"]
