@@ -5,7 +5,7 @@ function mapArticle(row) {
     id: row.id,
     title: row.title,
     content: row.content,
-    // created_at kolonunu frontend'e createdAt olarak gönderiyoruz
+    
     createdAt:
       row.created_at instanceof Date
         ? row.created_at.toISOString()
