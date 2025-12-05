@@ -15,12 +15,12 @@ phases:
       - echo Building Docker images...
       - docker build -t automind-backend ./backend
       - docker build -t automind-frontend ./frontend
-      - docker tag automind-backend:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/automind-backend:latest
-      - docker tag automind-frontend:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/automind-frontend:latest
+      - docker tag automind-backend:latest 113874974703.dkr.ecr.eu-north-1.amazonaws.com/automind-backend:latest
+      - docker tag automind-frontend:latest 113874974703.dkr.ecr.eu-north-1.amazonaws.com/automind-frontend:latest
 
   post_build:
     commands:
       - echo Pushing Docker images...
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/automind-backend:latest
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/automind-frontend:latest
+      - docker push 113874974703.dkr.ecr.eu-north-1.amazonaws.com/automind-backend:latest
+      - docker push 113874974703.dkr.ecr.eu-north-1.amazonaws.com/automind-frontend:latest
       - echo Build completed successfully!
