@@ -2,8 +2,10 @@ import {
   initArticleTable,
   seedInitialArticles,
 } from "./models/articleModel.js";
-import { startArticleJob } from "./services/articleJob.js";
-
+import {
+  startArticleJob,
+  runDailyArticleJobOnce, // ⬅️ test endpoint için eklendi
+} from "./services/articleJob.js";
 
 import express from "express";
 import cors from "cors";
@@ -18,9 +20,26 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
-
-// Routes
+// Ana article route'ları
+// Örnek: GET /api/articles  → liste
+//        GET /api/articles/:id → detay
+//        POST /api/articles    → manuel ekleme vs.
 app.use("/api/articles", articleRoutes);
+
+// 🔹 TEST ENDPOINT: Cron job'u manuel tetiklemek için
+// Postman: POST http://localhost:4000/api/articles/run-daily-test
+app.post("/api/articles/run-daily-test", async (req, res) => {
+  try {
+    const saved = await runDailyArticleJobOnce();
+    return res.status(201).json({
+      message: "Test daily article created",
+      article: saved,
+    });
+  } catch (error) {
+    console.error("Error running daily job test:", error);
+    return res.status(500).json({ error: "Failed to run daily job test" });
+  }
+});
 
 // Health check endpoint
 app.get("/health", (req, res) => {

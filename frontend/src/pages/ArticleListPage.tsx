@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api/client.ts";
+import api from "../api/client";
 
 interface Article {
   id: number;
@@ -11,6 +11,7 @@ interface Article {
 const ArticleListPage: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [latestArticle, setLatestArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
 
@@ -18,10 +19,26 @@ const ArticleListPage: React.FC = () => {
     const fetchArticles = async () => {
       try {
         setLoading(true);
+        setError("");
+
         const res = await api.get<Article[]>("/api/articles");
-        setArticles(res.data);
-        if (res.data.length > 0) {
-          setSelectedArticle(res.data[0]); // ilk makaleyi default seç
+        const data = res.data || [];
+
+        if (data.length > 0) {
+          // En güncelden eskiye doğru sırala
+          const sorted = [...data].sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() -
+              new Date(a.createdAt).getTime()
+          );
+
+          setArticles(sorted);
+          setSelectedArticle(sorted[0]); // en yeni makaleyi seç
+          setLatestArticle(sorted[0]);   // header'da göstereceğimiz makale
+        } else {
+          setArticles([]);
+          setSelectedArticle(null);
+          setLatestArticle(null);
         }
       } catch (err) {
         console.error(err);
@@ -38,75 +55,138 @@ const ArticleListPage: React.FC = () => {
     setSelectedArticle(article);
   };
 
-  if (loading) {
-    return (
-      <div className="page">
-        <h1>AutoMind Blog</h1>
-        <p>Loading articles...</p>
-      </div>
-    );
-  }
+  const formatDate = (iso?: string) => {
+    if (!iso) return "-";
+    return new Date(iso).toLocaleString("tr-TR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
 
-  if (error) {
-    return (
-      <div className="page">
-        <h1>AutoMind Blog</h1>
-        <p style={{ color: "red" }}>{error}</p>
-      </div>
-    );
-  }
+  const isLoading = loading;
+  const hasError = !!error;
+  const hasArticles = articles.length > 0;
 
   return (
-    <div className="page">
-      <header className="header">
-        <h1>AutoMind Blog</h1>
-        <p className="subtitle">AI-powered, auto-generated articles</p>
+    <div className="app-container">
+      {/* ÜST BAŞLIK - her zaman ortada sabit */}
+      <header className="app-header">
+        <h1 className="app-title">AutoMind Blog</h1>
+        <p className="app-subtitle">AI-powered, auto-generated articles</p>
+
+        {/* Burada son AI makalesinin tarihini gösteriyoruz */}
+        <p className="app-subtitle">
+          {isLoading
+            ? "Loading latest AI article..."
+            : hasError
+            ? ""
+            : latestArticle
+            ? `Last AI article: ${formatDate(latestArticle.createdAt)}`
+            : "No AI articles generated yet."}
+        </p>
+
+        <div className="app-divider" />
       </header>
 
-      <div className="layout">
-        {/* Sol taraf: liste */}
-        <aside className="sidebar">
-          <h2>Articles</h2>
-          {articles.length === 0 && <p>No articles yet.</p>}
-          <ul className="article-list">
-            {articles.map((article) => (
-              <li
-                key={article.id}
-                className={
-                  selectedArticle?.id === article.id
-                    ? "article-item active"
-                    : "article-item"
-                }
-                onClick={() => handleSelectArticle(article)}
-              >
-                <h3>{article.title}</h3>
-                <p className="snippet">
-                  {article.content.slice(0, 80)}
-                  {article.content.length > 80 ? "..." : ""}
-                </p>
-                <span className="date">
-                  {new Date(article.createdAt).toLocaleString()}
-                </span>
-              </li>
-            ))}
-          </ul>
+      {/* ALT LAYOUT: Sol liste / Sağ detay */}
+      <main className="app-content">
+        {/* SOL TARAF: MAKALE LİSTESİ */}
+        <aside className="article-list">
+          {isLoading && (
+            <div className="detail-placeholder loading">
+              Loading articles...
+            </div>
+          )}
+
+          {hasError && !isLoading && (
+            <div className="detail-placeholder" style={{ color: "#f97373" }}>
+              {error}
+            </div>
+          )}
+
+          {!isLoading &&
+            !hasError &&
+            hasArticles &&
+            articles.map((article) => {
+              const isActive = selectedArticle?.id === article.id;
+              const snippet =
+                article.content.length > 80
+                  ? article.content.slice(0, 80) + "..."
+                  : article.content;
+
+              const created = formatDate(article.createdAt);
+
+              return (
+                <div
+                  key={article.id}
+                  className={
+                    isActive
+                      ? "article-card article-card--active"
+                      : "article-card"
+                  }
+                  onClick={() => handleSelectArticle(article)}
+                >
+                  <h3 className="article-card-title">{article.title}</h3>
+
+                  <p className="snippet">{snippet}</p>
+
+                  <div className="article-card-meta">
+                    <span className="article-chip">Article #{article.id}</span>
+                    <span>{created}</span>
+                  </div>
+                </div>
+              );
+            })}
+
+          {!isLoading && !hasError && !hasArticles && (
+            <div className="detail-placeholder">No articles found.</div>
+          )}
         </aside>
 
-        {/* Sağ taraf: detay */}
-        <main className="content">
-          {selectedArticle ? (
-            <>
-              <h2>{selectedArticle.title}</h2>
-              <p className="date">
-                {new Date(selectedArticle.createdAt).toLocaleString()}
-              </p>
-              <div className="article-body">{selectedArticle.content}</div>
-            </>
-          ) : (
-            <p>Select an article to read.</p>
+        {/* SAĞ TARAF: DETAY ALANI */}
+        <section className="article-detail">
+          {isLoading && (
+            <div className="detail-placeholder loading">
+              Loading article...
+            </div>
           )}
-        </main>
-      </div>
+
+          {hasError && !isLoading && (
+            <div className="detail-placeholder" style={{ color: "#f97373" }}>
+              {error}
+            </div>
+          )}
+
+          {!isLoading && !hasError && !selectedArticle && (
+            <div className="detail-placeholder">
+              Select an article to read.
+            </div>
+          )}
+
+          {!isLoading && !hasError && selectedArticle && (
+            <>
+              <div className="detail-header">
+                <h2 className="detail-title">{selectedArticle.title}</h2>
+                <span className="detail-badge">AI Article</span>
+              </div>
+
+              <div className="article-card-meta">
+                <span>{formatDate(selectedArticle.createdAt)}</span>
+              </div>
+
+              <div className="detail-body">
+                {selectedArticle.content.split("\n").map((para, idx) => (
+                  <p key={idx}>{para}</p>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      </main>
     </div>
   );
 };

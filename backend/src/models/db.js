@@ -1,20 +1,24 @@
+// backend/src/db.js
 import pkg from "pg";
-import dotenv from "dotenv";
-
-dotenv.config();
-
 const { Pool } = pkg;
 
-const pool = new Pool({
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "postgres",
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME || "automindblog",
+const {
+  POSTGRES_HOST = "localhost",
+  POSTGRES_PORT = 5432,
+  POSTGRES_USER = "postgres",
+  POSTGRES_PASSWORD = "postgres",
+  POSTGRES_DB = "automind",
+} = process.env;
+
+export const pool = new Pool({
+  host: POSTGRES_HOST,
+  port: Number(POSTGRES_PORT),
+  user: POSTGRES_USER,
+  password: POSTGRES_PASSWORD,
+  database: POSTGRES_DB,
 });
 
-pool.on("error", (err) => {
-  console.error("❌ Unexpected PG client error", err);
-});
-
+// articleModel.js şu şekilde kullanıyor:
+// import pool from "./db.js";
 export default pool;
+

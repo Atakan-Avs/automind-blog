@@ -32,7 +32,7 @@ function parseArticleText(rawText) {
   const firstLine = lines[0] || "Untitled Article";
   const title = firstLine.replace(/^["'#*\s]+/, "").trim();
 
-  const body = lines.slice(2).join("\n").trim() || text; // 2: title + blank line
+  const body = lines.slice(2).join("\n").trim() || text;
 
   return { title, content: body };
 }
@@ -44,23 +44,23 @@ export async function generateArticle(topic = "Modern web development") {
 
   const prompt = buildPrompt(topic);
 
-  const res = await fetch(
-    `https://api-inference.huggingface.co/models/${HF_MODEL_ID}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${HF_API_TOKEN}`,
-        "Content-Type": "application/json",
+  // NEW router endpoint
+  const url = `https://router.huggingface.co/models/${HF_MODEL_ID}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${HF_API_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 600,
+        temperature: 0.7,
       },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 600,
-          temperature: 0.7,
-        },
-      }),
-    }
-  );
+    }),
+  });
 
   if (!res.ok) {
     const errorText = await res.text();
