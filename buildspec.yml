@@ -1,0 +1,32 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: "eu-north-1"
+    BACKEND_REPO: "113874974703.dkr.ecr.eu-north-1.amazonaws.com/automind-backend"
+    FRONTEND_REPO: "113874974703.dkr.ecr.eu-north-1.amazonaws.com/automind-frontend"
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - $(aws ecr get-login-password --region $AWS_REGION | sed 's|https://||') | docker login --username AWS --password-stdin 113874974703.dkr.ecr.eu-north-1.amazonaws.com
+
+  build:
+    commands:
+      - echo Building Backend Image...
+      - docker build -t automind-backend ./backend
+      - docker tag automind-backend:latest $BACKEND_REPO:latest
+
+      - echo Building Frontend Image...
+      - docker build -t automind-frontend ./frontend
+      - docker tag automind-frontend:latest $FRONTEND_REPO:latest
+
+  post_build:
+    commands:
+      - echo Pushing Backend Image...
+      - docker push $BACKEND_REPO:latest
+      - echo Pushing Frontend Image...
+      - docker push $FRONTEND_REPO:latest
+      - echo Build and Push completed successfully!
