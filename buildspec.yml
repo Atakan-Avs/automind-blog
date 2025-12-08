@@ -15,18 +15,32 @@ phases:
 
   build:
     commands:
-      - echo Building Backend Image...
-      - docker build -t automind-backend ./backend
+      - echo "===> Listing repo root"
+      - ls
+      - echo "===> Listing backend folder"
+      - ls backend
+      - echo "===> Listing frontend folder"
+      - ls frontend
+
+      - echo "===> Building Backend Image..."
+      - docker build -t automind-backend -f backend/Dockerfile .
+
+      - echo "===> Tagging Backend Image..."
       - docker tag automind-backend:latest $BACKEND_REPO:latest
 
-      - echo Building Frontend Image...
-      - docker build -t automind-frontend ./frontend
+      - echo "===> Building Frontend Image..."
+      - docker build -t automind-frontend -f frontend/Dockerfile .
+
+      - echo "===> Tagging Frontend Image..."
       - docker tag automind-frontend:latest $FRONTEND_REPO:latest
 
   post_build:
     commands:
-      - echo Pushing Backend Image...
+      - echo "===> Pushing Backend Image..."
       - docker push $BACKEND_REPO:latest
-      - echo Pushing Frontend Image...
+
+      - echo "===> Pushing Frontend Image..."
       - docker push $FRONTEND_REPO:latest
-      - echo Build and Push completed successfully!
+
+      - echo "Build and Push completed successfully!"
+
