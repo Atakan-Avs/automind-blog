@@ -12,35 +12,35 @@ phases:
       - echo Logging in to Amazon ECR...
       - aws --version
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 113874974703.dkr.ecr.eu-north-1.amazonaws.com
+      - echo Logged in to ECR.
 
   build:
     commands:
-      - echo "===> Listing repo root"
+      - echo "Current directory:"
+      - pwd
       - ls
-      - echo "===> Listing backend folder"
-      - ls backend
-      - echo "===> Listing frontend folder"
-      - ls frontend
-
-      - echo "===> Building Backend Image..."
-      - docker build -t automind-backend -f backend/Dockerfile .
-
-      - echo "===> Tagging Backend Image..."
-      - docker tag automind-backend:latest $BACKEND_REPO:latest
-
-      - echo "===> Building Frontend Image..."
-      - docker build -t automind-frontend -f frontend/Dockerfile .
-
-      - echo "===> Tagging Frontend Image..."
-      - docker tag automind-frontend:latest $FRONTEND_REPO:latest
+      - echo "Building backend image..."
+      - cd backend
+      - ls
+      - docker build -t automind-backend .
+      - cd ..
+      - echo "Building frontend image..."
+      - cd frontend
+      - ls
+      - docker build -t automind-frontend .
+      - cd ..
+      - echo "Docker images after build:"
+      - docker images
 
   post_build:
     commands:
-      - echo "===> Pushing Backend Image..."
+      - echo Tagging images...
+      - docker tag automind-backend:latest $BACKEND_REPO:latest
+      - docker tag automind-frontend:latest $FRONTEND_REPO:latest
+      - echo Pushing Backend image...
       - docker push $BACKEND_REPO:latest
-
-      - echo "===> Pushing Frontend Image..."
+      - echo Pushing Frontend image...
       - docker push $FRONTEND_REPO:latest
+      - echo Build completed on `date`
 
-      - echo "Build and Push completed successfully!"
 
